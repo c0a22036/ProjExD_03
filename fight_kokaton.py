@@ -10,17 +10,17 @@ HEIGHT = 900  #  ゲームウィンドウの高さ
 NUM_OF_BOMBS = 5
 
 
-def check_bound(area: pg.Rect, obj: pg.Rect) -> tuple[bool, bool]:
+def check_bound(XXX: pg.Rect, obj: pg.Rect) -> tuple[bool, bool]:
     """
     オブジェクトが画面内か画面外かを判定し，真理値タプルを返す
-    引数1 area：画面SurfaceのRect
+    引数1 XXX：画面SurfaceのRect
     引数2 obj：オブジェクト（爆弾，こうかとん）SurfaceのRect
     戻り値：横方向，縦方向のはみ出し判定結果（画面内：True／画面外：False）
     """
     yoko, tate = True, True
-    if obj.left < area.left or area.right < obj.right:  # 横方向のはみ出し判定
+    if obj.left < XXX.left or XXX.right < obj.right:  # 横方向のはみ出し判定
         yoko = False
-    if obj.top < area.top or area.bottom < obj.bottom:  # 縦方向のはみ出し判定
+    if obj.top < XXX.top or XXX.bottom < obj.bottom:  # 縦方向のはみ出し判定
         tate = False
     return yoko, tate
 
@@ -29,7 +29,7 @@ class Bird:
     """
     ゲームキャラクター（こうかとん）に関するクラス
     """
-    _delta = {  # 押下キーと移動量の辞書
+    delta = {  # 押下キーと移動量の辞書
         pg.K_UP: (0, -1),
         pg.K_DOWN: (0, +1),
         pg.K_LEFT: (-1, 0),
@@ -42,6 +42,7 @@ class Bird:
         引数1 num：こうかとん画像ファイル名の番号
         引数2 xy：こうかとん画像の位置座標タプル
         """
+        self.start_time = time.time()  # ゲームの開始時刻
         self._img = pg.transform.flip(  # 左右反転
             pg.transform.rotozoom(  # 2倍に拡大
                 pg.image.load(f"ex03/fig/{num}.png"), 
@@ -84,7 +85,7 @@ class Bird:
         引数2 screen：画面Surface
         """
         sum_mv = [0, 0]
-        for k, mv in self._delta.items():
+        for k, mv in self.delta.items():
             if key_lst[k]:
                 self._rct.move_ip(mv)
                 sum_mv[0] += mv[0]  # 横方向合計
@@ -109,6 +110,7 @@ class Bomb:
         """
         爆弾円Surfaceを生成する
         """
+        self.start_time = time.time()  # ゲームの開始時刻
         rad = random.randint(10, 50)
         color = random.choice(Bomb._coloars)
         self._img = pg.Surface((2*rad, 2*rad))
@@ -119,6 +121,9 @@ class Bomb:
         self._vx, self._vy = random.choice(Bomb._dires), random.choice(Bomb._dires)
 
     def update(self, screen: pg.Surface):
+        current_time = time.time()
+        if current_time - self.start_time >= 30:  # 3秒経過したら新しい爆弾を生成
+            self.set_random_position()
         """
         爆弾を速度ベクトルself._vx, self._vyに基づき移動させる
         引数 screen：画面Surface
