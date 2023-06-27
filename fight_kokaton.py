@@ -148,7 +148,7 @@ class Beam:
 
 
 def main():
-    pg.display.set_caption("たたかえ！こうかとん")
+    pg.display.set_caption("たたかえ!こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     bg_img = pg.image.load("ex03/fig/pg_bg.jpg")
