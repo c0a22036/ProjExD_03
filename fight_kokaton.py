@@ -189,6 +189,19 @@ class Explosion:
         screen.blit(image, self._rect)        
 
 
+class Score:
+    def __init__(self):
+        self.font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 30)
+        self.color = (0, 0, 255)
+        self.score = 0
+        self.img = self.font.render("Score: 0", 0, self.color)
+        self.img_rect = self.img.get_rect()
+        self.img_rect.bottomleft = (100, HEIGHT - 50)
+
+    def update(self, screen):
+        self.img = self.font.render(f"Score: {self.score}", 0, self.color)
+        screen.blit(self.img, self.img_rect)
+
 def main():
     pg.display.set_caption("たたかえ!こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -197,8 +210,10 @@ def main():
 
     bird = Bird(3, (900, 400))
     bombs = [Bomb() for _ in range(NUM_OF_BOMBS)]
-    explosions = []  # 爆発エフェクトのリスト
+    explosions = []
     beam = None
+
+    score = Score()  # スコアクラスのインスタンスを生成
 
     tmr = 0
     while True:
@@ -206,19 +221,18 @@ def main():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                beam =Beam(bird)
+                beam = Beam(bird)
         tmr += 1
         screen.blit(bg_img, [0, 0])
-        
+
         for bomb in bombs:
-            bomb.update(screen) 
+            bomb.update(screen)
             if bird._rct.colliderect(bomb._rct):
-                # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
                 bird.change_img(8, screen)
                 pg.display.update()
                 time.sleep(1)
-                return       
-        
+                return
+
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
 
@@ -229,14 +243,16 @@ def main():
                     beam = None
                     del bombs[i]
                     bird.change_img(6, screen)
-                    explosions.append(Explosion(bomb._rct))  # 爆発エフェクトを追加
+                    explosions.append(Explosion(bomb._rct))
+                    score.score += 1  # スコアを1点増やす
                     break
 
-        # 爆発エフェクトの更新と描画
         for explosion in explosions:
             explosion.update(screen)
             if explosion._life <= 0:
                 explosions.remove(explosion)
+
+        score.update(screen)  # スコアを更新して描画
 
         pg.display.update()
         clock.tick(1000)
