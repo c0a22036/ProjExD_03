@@ -1,7 +1,7 @@
 import random
 import sys
 import time
-
+import math
 import pygame as pg
 
 
@@ -66,6 +66,7 @@ class Bird:
         self._img = self._imgs[(+1, 0)]
         self._rct = self._img.get_rect()
         self._rct.center = xy
+        self._dire = (+5, 0)  # 向きのタプル
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -83,17 +84,18 @@ class Bird:
         引数2 screen：画面Surface
         """
         sum_mv = [0, 0]
-        for k, mv in __class__._delta.items():
+        for k, mv in self._delta.items():
             if key_lst[k]:
                 self._rct.move_ip(mv)
-                sum_mv[0] += mv[0] #横方向合計
-                sum_mv[1] += mv[1] #縦方向合計
+                sum_mv[0] += mv[0]  # 横方向合計
+                sum_mv[1] += mv[1]  # 縦方向合計
         if check_bound(screen.get_rect(), self._rct) != (True, True):
-            for k, mv in __class__._delta.items():
+            for k, mv in self._delta.items():
                 if key_lst[k]:
                     self._rct.move_ip(-mv[0], -mv[1])
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self._img = self._imgs[tuple(sum_mv)]
+        self._dire = tuple(sum_mv)  # 向きの更新
         screen.blit(self._img, self._rct)
 
 
@@ -131,22 +133,26 @@ class Bomb:
 
 
 class Beam:
-    """
-    ビームに関するクラス 
-    """
     def __init__(self, bird: Bird):
         self._img = pg.image.load("ex03/fig/beam.png")
         self._rct = self._img.get_rect()
-        self._rct.left = bird._rct.right
-        self._rct.centery = bird._rct.centery
-        self._vx,self._vy = +1, 0
+
+        vx, vy = bird._dire
+        angle = math.degrees(math.atan2(-vy, vx))
+        self._img = pg.transform.rotozoom(self._img, angle, 1.0)
+
+        self._rct.centerx = bird._rct.centerx + bird._rct.width * vx / 5
+        self._rct.centery = bird._rct.centery + bird._rct.height * vy / 5
+
+        # ビームの速度を設定する変数
+        self._speed = 1
+
+        # ビームの移動量を計算
+        self._dx = vx * self._speed
+        self._dy = vy * self._speed
 
     def update(self, screen: pg.Surface):
-        """
-        ビームを速度ベクトルself._vx, self._vyに基づき移動させる
-        引数 screen：画面Surface
-        """
-        self._rct.move_ip(self._vx, self._vy)
+        self._rct.move_ip(self._dx, self._dy)
         screen.blit(self._img, self._rct)
 
 
@@ -241,3 +247,5 @@ if __name__ == "__main__":
     main()
     pg.quit()
     sys.exit()
+
+    
