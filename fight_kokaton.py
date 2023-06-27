@@ -150,6 +150,39 @@ class Beam:
         screen.blit(self._img, self._rct)
 
 
+class Explosion:
+    """
+    爆発エフェクトに関するクラス
+    """
+    def __init__(self, bomb_rect: pg.Rect):
+        """
+        爆発エフェクトの画像リストを生成し、初期設定を行う
+        引数 bomb_rect: 爆発した爆弾の矩形情報
+        """
+        self._images = [
+            pg.image.load("ex03/fig/explosion.gif"),
+            pg.transform.flip(pg.image.load("ex03/fig/explosion.gif"), True, False),
+            pg.transform.flip(pg.image.load("ex03/fig/explosion.gif"), False, True),
+            pg.transform.flip(pg.image.load("ex03/fig/explosion.gif"), True, True)
+        ]
+        self._image_index = 0
+        self._rect = self._images[0].get_rect()
+        self._rect.center = bomb_rect.center
+        self._life = 20  # 爆発の表示時間
+
+    def update(self, screen: pg.Surface):
+        """
+        爆発エフェクトを更新して描画する
+        引数 screen: 画面Surface
+        """
+        self._life -= 1
+        if self._life <= 0:
+            return
+        self._image_index = (self._image_index + 1) % len(self._images)
+        image = self._images[self._image_index]
+        screen.blit(image, self._rect)        
+
+
 def main():
     pg.display.set_caption("たたかえ!こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -158,6 +191,7 @@ def main():
 
     bird = Bird(3, (900, 400))
     bombs = [Bomb() for _ in range(NUM_OF_BOMBS)]
+    explosions = []  # 爆発エフェクトのリスト
     beam = None
 
     tmr = 0
@@ -182,14 +216,21 @@ def main():
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
 
-        if beam is not None:  # ビームが存在しているとき
+        if beam is not None:
             beam.update(screen)
             for i, bomb in enumerate(bombs):
                 if beam._rct.colliderect(bomb._rct):
                     beam = None
                     del bombs[i]
                     bird.change_img(6, screen)
+                    explosions.append(Explosion(bomb._rct))  # 爆発エフェクトを追加
                     break
+
+        # 爆発エフェクトの更新と描画
+        for explosion in explosions:
+            explosion.update(screen)
+            if explosion._life <= 0:
+                explosions.remove(explosion)
 
         pg.display.update()
         clock.tick(1000)
